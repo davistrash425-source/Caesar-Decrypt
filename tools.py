@@ -1,5 +1,3 @@
-import json
-
 def shift_char( char, num ):
     # only shift letters, and wrap around the alphabet so Z+1 -> A
     # (spaces/punctuation stay the same so they never turn into control characters)
@@ -27,19 +25,23 @@ def encrypt( word,  num ):
 
 
 def decrypt( word, num ):
+    """Decrypts word with the given key
+
+    Args:
+        word: the string that is going to be decrypted
+        num: key to decrypt with
+
+    Returns:
+        unencrypted_word: the word shifted back using the given key
+    """
     unencrypted_word = ""
     for val in word:
         unencrypted_word += shift_char( val, -num )
     return unencrypted_word
 
-def brute_force( word ):
-    for i in range(26):
-        print( str(i + 1 ) + ": " + decrypt( word, i + 1 ) )
-
-with open( "stats.json", "r", encoding="utf-8" ) as file:
-    data = json.load(file)
-
 def score( cypher ):
+
+    # takes the cypher and puts it lower case
     cypher = cypher.lower()
 
     # reset the counts every call, otherwise they pile up across calls
@@ -47,6 +49,7 @@ def score( cypher ):
     for c in "abcdefghijklmnopqrstuvwxyz":
         letters[c] = 0
 
+    # adds up all the amount of times each time each letter shows up in the cypher
     for letter in cypher:
         if letter in letters:
             letters[letter] += 1
@@ -59,12 +62,19 @@ def score( cypher ):
     return score
 
 def comp_freq( freq ):
+    # imports json and the file containing the data the program uses for "standard" english stats
+    import json
+    with open( "stats.json", "r", encoding="utf-8" ) as file:
+        data = json.load(file)
+
     deviations = {}
+    # for each letter, the program subtracts the target frequency by the actual frequency, absolute values it and puts it into an array
     for letter in freq:
         target_freq = data["frequency_percent"][letter]
         real_frequency = freq[letter]
         deviations[letter] = abs( target_freq - real_frequency )
     score = 0
+    # the deviations are then added and divided by 26 to find the mean deviation
     for dev in deviations.values():
         score += dev
     return (score/26)
@@ -76,12 +86,15 @@ def findFrequencyPercent( letters ):
     for c in "abcdefghijklmnopqrstuvwxyz":
         frequencies[c] = 0
 
+    # all the letters are added up to find the total amount of letters are in the string
     for letter in letters:
         total += letters[letter]
 
+    # If there are no letters, return the array with the zeros, otherwise the program will crash because of 0/0
     if total == 0:
         return frequencies
 
+    # for each letter, it divides the amount of times the letter shows up by the total amount of letters to find the percentage
     for letter in letters:
         frequencies[letter] = ((letters[letter])/total)*100
 
@@ -90,11 +103,14 @@ def findFrequencyPercent( letters ):
 def rank_scores( cypher ):
     scores = {}
 
+    # puts all the scores into a dict with the corresponding shift amount
     for shift in range(1,27):
         scores[shift] = score(decrypt(cypher, shift))
 
+    # finds the the shift with the lowest score
     minimum = min( scores, key=scores.get )
 
+    # formatting
     preview_width = 48
 
     print()
